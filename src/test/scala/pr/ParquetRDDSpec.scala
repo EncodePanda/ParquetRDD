@@ -1,5 +1,7 @@
 package pr
 
+import org.scalatest.Matchers
+
 import org.apache.spark._
 import org.apache.spark.rdd._
 import org.scalatest.FreeSpec
@@ -9,7 +11,7 @@ import org.apache.parquet.example.data.Group
 
 class AltGroupReadSupport extends GroupReadSupport with Serializable
 
-class ParquetRDDSpec extends FreeSpec {
+class ParquetRDDSpec extends FreeSpec with Matchers {
 
   val config =
     new SparkConf().setMaster("local[*]").setAppName("ParquetRDDSpec")
@@ -22,9 +24,10 @@ class ParquetRDDSpec extends FreeSpec {
       val rdd: RDD[Group] =
         sc.parquet("hdfs://localhost:9000/data3.parquet", new AltGroupReadSupport())
 
-      rdd.foreach { group =>
-        println(group)
-      }
+      val login =
+        rdd.filter(_.getLong("id", 0) == 500).map(_.getString("login", 0)).first()
+
+      login should equal("login500")
 
       sc.stop()
     }
