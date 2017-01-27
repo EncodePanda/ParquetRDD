@@ -11,7 +11,8 @@ class AltGroupReadSupport extends GroupReadSupport with Serializable
 
 class ParquetRDDSpec extends FreeSpec {
 
-  val config = new SparkConf().setMaster("local[*]").setAppName("ParquetRDDSpec")
+  val config =
+    new SparkConf().setMaster("local[*]").setAppName("ParquetRDDSpec")
 
   import ParquetRDD._
 
