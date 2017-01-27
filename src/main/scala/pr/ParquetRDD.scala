@@ -14,9 +14,9 @@ import org.apache.spark.rdd._
 import scala.reflect.ClassTag
 
 class ParquetRDDPartition[T](val index: Int,
+                             val readSupport: ReadSupport[T] with Serializable,
                              s: FileSplit,
-                             c: Configuration,
-                             val readSupport: ReadSupport[T] with Serializable)
+                             c: Configuration)
     extends Partition {
 
   val split = new SerializableWritable[FileSplit](s)
@@ -51,7 +51,7 @@ class ParquetRDD[T: ClassTag](
       case (b, i) =>
         val split =
           new FileSplit(path, b.getOffset(), b.getLength(), b.getHosts())
-        new ParquetRDDPartition(i, split, conf, readSupport)
+        new ParquetRDDPartition(i, readSupport, split, conf)
     }
   }
 
