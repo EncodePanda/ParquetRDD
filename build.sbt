@@ -1,4 +1,6 @@
 name := "ParquetRDD"
+organization := "com.slamdata"
+version := "0.1.0"
 
 scalaVersion := "2.11.8"
 
