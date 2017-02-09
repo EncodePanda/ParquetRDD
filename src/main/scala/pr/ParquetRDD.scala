@@ -1,7 +1,9 @@
 package pr
 
 import org.apache.parquet.hadoop.api.ReadSupport
-import org.apache.parquet.hadoop.ParquetRecordReader
+import org.apache.parquet.hadoop.{ParquetFileReader, ParquetRecordReader}
+import org.apache.parquet.schema.MessageType
+import org.apache.parquet.hadoop.metadata.{FileMetaData, ParquetMetadata}
 
 import org.apache.hadoop.fs.Path
 import org.apache.hadoop.conf.Configuration
@@ -54,15 +56,28 @@ class ParquetRDD[T: ClassTag](
         new ParquetRDDPartition(i, readSupport, split, conf)
     }
   }
-
 }
 
 object ParquetRDD {
   implicit class SparkContextOps(sc: SparkContext) {
     def parquet[T: ClassTag](
-        path: String,
+        pathStr: String,
         readSupport: ReadSupport[T] with Serializable
     ): ParquetRDD[T] =
-      new ParquetRDD[T](sc, path, readSupport)
+      new ParquetRDD[T](sc, pathStr, readSupport)
+
+    def parquet[T: ClassTag](
+        pathStr: String,
+        readSupport: MessageType => ReadSupport[T] with Serializable
+    ): ParquetRDD[T] = {
+      val path                       = new Path(pathStr)
+      val conf                       = sc.hadoopConfiguration
+      val fs                         = path.getFileSystem(conf)
+      val fileStatus                 = fs.getFileStatus(path)
+      val metaData: ParquetMetadata  = ParquetFileReader.readFooter(conf, fileStatus)
+      val fileMetaData: FileMetaData = metaData.getFileMetaData()
+      val schema                     = fileMetaData.getSchema()
+      new ParquetRDD[T](sc, pathStr, readSupport(schema))
+    }
   }
 }
